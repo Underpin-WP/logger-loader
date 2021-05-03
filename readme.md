@@ -1,4 +1,4 @@
-# Underpin Script Loader
+# Underpin Logger Loader
 
 Loader That assists with adding loggers to a WordPress website.
 
