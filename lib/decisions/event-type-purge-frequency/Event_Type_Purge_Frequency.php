@@ -7,10 +7,10 @@
  */
 
 
-namespace Underpin\Decisions\Event_Type_Purge_Frequency;
+namespace Underpin_Logger\Decisions\Event_Type_Purge_Frequency;
 
 
-use Underpin\Abstracts\Registries\Decision_List;
+use Underpin_Decision_Lists\Abstracts\Registries\Decision_List;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -32,6 +32,6 @@ class Event_Type_Purge_Frequency extends Decision_List {
 	 * @inheritDoc
 	 */
 	protected function set_default_items() {
-		$this->add( 'event_type', 'Underpin\Decisions\Event_Type_Purge_Frequency\Event_Type' );
+		$this->add( 'event_type', 'Underpin_Logger\Decisions\Event_Type_Purge_Frequency\Event_Type' );
 	}
 }

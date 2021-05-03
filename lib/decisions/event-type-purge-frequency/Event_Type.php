@@ -7,10 +7,10 @@
  */
 
 
-namespace Underpin\Decisions\Event_Type_Purge_Frequency;
+namespace Underpin_Logger\Decisions\Event_Type_Purge_Frequency;
 
 
-use Underpin\Abstracts\Decision;
+use Underpin_Decision_Lists\Abstracts\Decision;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
