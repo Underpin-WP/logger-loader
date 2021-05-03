@@ -10,6 +10,7 @@
 namespace Underpin_Logger\Factories;
 
 
+use Underpin\Traits\Instance_Setter;
 use Underpin_Logger\Abstracts\Event_Type;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -24,15 +25,11 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package Underpin\Abstracts
  */
 class Event_Type_Instance extends Event_Type {
+	use Instance_Setter;
 
 	public function __construct( $args = [] ) {
 		// Override default params.
-		foreach ( $args as $arg => $value ) {
-			if ( isset( $this->$arg ) ) {
-				$this->$arg = $value;
-				unset( $args[ $arg ] );
-			}
-		}
+		$this->set_values($args);
 
 		parent::__construct();
 	}
