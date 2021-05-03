@@ -17,7 +17,7 @@ Underpin, it should work as-expected.
 
 ## Setup
 
-1. Install Underpin. See [Underpin Docs](https://www.github.com/underpin/underpin)
+1. Install Underpin. See [Underpin Docs](https://www.github.com/underpin-wp/underpin)
 1. Register new event types as-needed.
 
 
@@ -238,18 +238,15 @@ Then, we create the class in the correct directory that matches our namespace. I
 A very basic example could look something like this.
 
 ```php
-underpin()->logger()->add( 'error', [
-			'class' => 'Underpin_Logger\Factories\Event_Type_Instance',
-			'args'  => [ [
-				'type'              => 'error',
-				'write_to_log'      => true,
-				'group'             => 'core',
-				'description'       => 'Intended to log events when something goes wrong.',
-				'name'              => "Error",
-				'include_backtrace' => true,
-				'purge_frequency'   => 7,
-			] ],
-		] );
+underpin()->logger()->add( 'custom_error', [
+	'type'              => 'error',
+	'write_to_log'      => true,
+	'group'             => 'core',
+	'description'       => 'Intended to log events when something goes wrong.',
+	'name'              => "Error",
+	'include_backtrace' => true,
+	'purge_frequency'   => 7,
+] );
 ```
 
 Alternatively, you can extend `Event_Type` and reference the extended class directly, like so:

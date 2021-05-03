@@ -21,7 +21,6 @@ add_action( 'underpin/before_setup', function ( $class ) {
 
 		// Add the logger.
 		underpin()->loaders()->add( 'logger', [
-			'instance' => 'Underpin_Logger\Abstracts\Event_Type',
 			'registry' => 'Underpin_Logger\Loaders\Logger',
 		] );
 

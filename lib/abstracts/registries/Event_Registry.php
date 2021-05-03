@@ -34,6 +34,8 @@ abstract class Event_Registry extends Loader_Registry {
 	 */
 	protected $abstraction_class = 'Underpin_Logger\Abstracts\Event_Type';
 
+	protected $default_factory = 'Underpin_Logger\Factories\Event_Type_Instance';
+
 	/**
 	 * Determines if the logger should log events, or not. Can be changed with mute, and unmute.
 	 *
