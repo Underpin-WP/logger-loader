@@ -1,0 +1,17 @@
+{
+  "name": "underpin/logger-loader",
+  "description": "Logger Loader for Underpin",
+  "type": "library",
+  "license": "GPL 2.0",
+  "authors": [
+    {
+      "name": "Alex Standiford",
+      "email": "a@alexstandiford.com"
+    }
+  ],
+  "autoload": {
+    "files": [
+      "logger.php"
+    ]
+  }
+}
