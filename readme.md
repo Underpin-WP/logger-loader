@@ -238,14 +238,11 @@ Then, we create the class in the correct directory that matches our namespace. I
 A very basic example could look something like this.
 
 ```php
-underpin()->logger()->add( 'custom_error', [
-	'type'              => 'error',
-	'write_to_log'      => true,
-	'group'             => 'core',
-	'description'       => 'Intended to log events when something goes wrong.',
-	'name'              => "Error",
-	'include_backtrace' => true,
-	'purge_frequency'   => 7,
+underpin()->scripts()->add( 'test', [
+	'handle'      => 'test',
+	'src'         => 'path/to/script/src',
+	'name'        => 'test',
+	'description' => 'The description',
 ] );
 ```
 
