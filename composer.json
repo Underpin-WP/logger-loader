@@ -9,6 +9,10 @@
       "email": "a@alexstandiford.com"
     }
   ],
+  "require": {
+    "underpin/cron-job-loader": "^1.0",
+    "underpin/decition-list-loader": "^1.0"
+  },
   "autoload": {
     "files": [
       "logger.php"

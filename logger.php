@@ -1,4 +1,7 @@
 <?php
+
+use function Underpin\underpin;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -15,9 +18,15 @@ add_action( 'underpin/before_setup', function ( $class ) {
 		require_once( plugin_dir_path( __FILE__ ) . 'lib/factories/Log_Item.php' );
 
 		// Add the logger.
-		Underpin\underpin()->loaders()->add( 'logger', [
+		underpin()->loaders()->add( 'logger', [
 			'instance' => 'Underpin_Logger\Abstracts\Event_Type',
 			'registry' => 'Underpin_Logger\Loaders\Logger',
 		] );
+
+		// Setup Cron jobs
+		underpin()->cron_jobs()->add( 'purge_logs', 'Underpin\Cron_Jobs\Purge_Logs' );
+
+		// Setup Decision Lists
+		underpin()->decision_lists()->add( 'event_type_purge_frequency', 'Underpin\Decisions\Event_Type_Purge_Frequency\Event_Type_Purge_Frequency' );
 	}
 }, 5 );
