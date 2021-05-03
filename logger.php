@@ -7,8 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Add this loader.
-add_action( 'underpin/before_setup', function ( $class ) {
-	if ( 'Underpin\Underpin' === $class ) {
+add_action( 'underpin/before_setup', function ( $instance ) {
 		require_once( plugin_dir_path( __FILE__ ) . 'lib/abstracts/registries/Event_Registry.php' );
 		require_once( plugin_dir_path( __FILE__ ) . 'lib/loaders/Logger.php' );
 		require_once( plugin_dir_path( __FILE__ ) . 'lib/abstracts/Event_Type.php' );
@@ -20,14 +19,13 @@ add_action( 'underpin/before_setup', function ( $class ) {
 		require_once( plugin_dir_path( __FILE__ ) . 'lib/decisions/event-type-purge-frequency/Event_Type_Purge_Frequency.php' );
 
 		// Add the logger.
-		underpin()->loaders()->add( 'logger', [
+		$instance->loaders()->add( 'logger', [
 			'registry' => 'Underpin_Logger\Loaders\Logger',
 		] );
 
 		// Setup Cron jobs
-		underpin()->cron_jobs()->add( 'purge_logs', 'Underpin\Cron_Jobs\Purge_Logs' );
+		$instance->cron_jobs()->add( 'purge_logs', 'Underpin\Cron_Jobs\Purge_Logs' );
 
 		// Setup Decision Lists
-		underpin()->decision_lists()->add( 'event_type_purge_frequency', 'Underpin_Logger\Decisions\Event_Type_Purge_Frequency\Event_Type_Purge_Frequency' );
-	}
+		$instance->decision_lists()->add( 'event_type_purge_frequency', 'Underpin_Logger\Decisions\Event_Type_Purge_Frequency\Event_Type_Purge_Frequency' );
 }, 5 );
