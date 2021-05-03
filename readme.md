@@ -1,24 +1,24 @@
 # Underpin Script Loader
 
-Loader That assists with adding scripts to a WordPress website.
+Loader That assists with adding loggers to a WordPress website.
 
 ## Installation
 
 ### Using Composer
 
-`composer require underpin/loaders/scripts`
+`composer require underpin/loaders/logger`
 
 ### Manually
 
 This plugin uses a built-in autoloader, so as long as it is required _before_
 Underpin, it should work as-expected.
 
-`require_once(__DIR__ . '/underpin-scripts/scripts.php');`
+`require_once(__DIR__ . '/underpin-logger/logger.php');`
 
 ## Setup
 
 1. Install Underpin. See [Underpin Docs](https://www.github.com/underpin/underpin)
-1. Register new scripts as-needed.
+1. Register new event types as-needed.
 
 
 ## Debug Logger
