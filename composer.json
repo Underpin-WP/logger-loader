@@ -11,7 +11,7 @@
   ],
   "require": {
     "underpin/cron-job-loader": "^1.0",
-    "underpin/decition-list-loader": "^1.0",
+    "underpin/decision-list-loader": "^1.0",
     "underpin/underpin": "1.2.*"
   },
   "autoload": {
