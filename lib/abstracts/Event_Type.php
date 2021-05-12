@@ -243,7 +243,7 @@ abstract class Event_Type extends ArrayIterator {
 			);
 		}
 
-		if ( ! is_subclass_of( $this->writer_class, 'Underpin\Abstracts\Writer' ) ) {
+		if ( ! is_subclass_of( $this->writer_class, 'Underpin_Logger\Abstracts\Writer' ) ) {
 			return new WP_Error(
 				'writer_class_invalid',
 				'The writer class must be extend the Writer class.',

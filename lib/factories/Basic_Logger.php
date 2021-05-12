@@ -12,7 +12,7 @@
 namespace Underpin_Logger\Factories;
 
 
-use Underpin\Abstracts\Event_Type;
+use Underpin_Logger\Abstracts\Event_Type;
 use Underpin_Logger\Abstracts\Writer;
 use WP_Error;
 use function Underpin\underpin;
@@ -48,7 +48,7 @@ class Basic_Logger extends Writer {
 		// If the log directory does not exist, create it and set permissions.
 		if ( ! is_writeable( $this->log_dir ) ) {
 			@mkdir( $this->log_dir );
-			@chmod( $this->log_dir, 0664 );
+			@chmod( $this->log_dir, 0764 );
 		}
 
 		parent::__construct( $event_type );
