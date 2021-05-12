@@ -102,6 +102,15 @@ abstract class Event_Type extends ArrayIterator {
 	public $name = '';
 
 	/**
+	 * PSR3 Syslog Level. Can be emergency, alert, critical, error, warning, notice, info, or debug.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string
+	 */
+	public $psr_level = '';
+
+	/**
 	 * The class to instantiate when writing to the error log.
 	 *
 	 * @since 1.0.0
@@ -275,7 +284,7 @@ abstract class Event_Type extends ArrayIterator {
 
 		$this[] = $item;
 
-		do_action( 'underpin/logger/after_logged_item', $item, $this->writer() );
+		do_action( 'underpin/logger/after_logged_item', $item, $this );
 
 		return $item;
 	}
