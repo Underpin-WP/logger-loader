@@ -57,9 +57,9 @@ Caught exceptions can be captured, too.
 
 ```php
 try{
-echo 'hi';
+  echo 'hi';
 }catch(Exception $e ){
-plugin_name_replace_me()->logger()->log_exception('error', $e);
+  plugin_name_replace_me()->logger()->log_exception('error', $e);
 }
 ```
 
@@ -67,14 +67,39 @@ By default, the logger will return a `Log_Item` class, but you can also _return_
 
 ```php
 $wp_error_object = plugin_name_replace_me()->logger()->log_as_error(
-'error',
-'error_code',
-'error_message',
-['arbitrary' => 'data', 'that' => 'is relevant']
+  'error',
+  'error_code',
+  'error message',
+  ['arbitrary' => 'data', 'that' => 'is relevant']
 );
 
 var_dump($wp_error_object); // WP_Error...
 ```
+
+**NOTE:** It is considered a bad practice to make your error message contain dynamic data. This can mess with logger utilities that use logged events and cause un-necessary bloat for logging utilities that check for identical events that have happened in the past. Instead, put related data in the `data` array in the 4th argument.
+
+**Bad:**
+
+
+```php
+$wp_error_object = plugin_name_replace_me()->logger()->log_as_error(
+  'error',
+  'invalid_product',
+  'The product ID ' . $id . ' is invalid'
+);
+```
+
+**Good:**
+
+```php
+$wp_error_object = plugin_name_replace_me()->logger()->log_as_error(
+  'error',
+  'invalid_product',
+  'An invalid product was referenced',
+  ['product_id' => $id]
+);
+```
+
 
 ### Gather Errors
 
