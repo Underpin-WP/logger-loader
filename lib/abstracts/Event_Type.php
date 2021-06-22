@@ -331,7 +331,7 @@ abstract class Event_Type extends ArrayIterator {
 		if ( isset( $this->$key ) ) {
 			return $this->$key;
 		} else {
-			return new WP_error( 'logger_param_not_set', 'The logger param ' . $key . ' could not be found.' );
+			return new WP_Error( 'logger_param_not_set', 'The logger param ' . $key . ' could not be found.' );
 		}
 	}
 
