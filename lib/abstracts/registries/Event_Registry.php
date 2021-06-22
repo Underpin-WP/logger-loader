@@ -232,17 +232,17 @@ abstract class Event_Registry extends Loader_Registry {
 
 		// If the logged event could not be found, search event type keys.
 		if ( is_wp_error( $result ) ) {
-			$event_types = $this->filter( [
+			$event_type = $this->find( [
 				'type' => $key,
 			] );
 
 			// If that also comes up empty, return the error.
-			if ( empty( $event_types ) ) {
+			if ( is_wp_error( $event_type ) ) {
 				return $result;
 			}
 
 			// Return the discovered event.
-			$result = $event_types[0];
+			$result = $event_type;
 		}
 
 		return $result;
