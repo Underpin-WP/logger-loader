@@ -11,6 +11,7 @@
 namespace Underpin_Logger\Factories;
 
 
+use Underpin_Logger\Abstracts\Event_Type;
 use WP_Error;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -79,6 +80,16 @@ class Log_Item {
 	 */
 	public $type;
 
+
+	/**
+	 * Event type object.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var Event_Type Event
+	 */
+	protected $event_type;
+
 	/**
 	 * Log Item Constructor.
 	 *
@@ -90,10 +101,15 @@ class Log_Item {
 	 * @param array  $data    Arbitrary data associated with this event message.
 	 */
 	public function __construct( $type, $code, $message, $data = array() ) {
-		$this->type    = $type;
+		if ( $type instanceof Event_Type ) {
+			$this->type       = $type->type;
+			$this->event_type = $type;
+		} else {
+			$this->type = $type;
+		}
 		$this->code    = $code;
 		$this->message = $message;
-		$this->data = $data;
+		$this->data    = $data;
 
 		if ( isset( $this->data['context'] ) ) {
 			$this->context = $this->data['context'];
@@ -115,20 +131,26 @@ class Log_Item {
 	 * @return string
 	 */
 	public function format() {
+		$additional_data = [];
 
-		$log_message = $this->code . ' - ' . $this->message;
-
-		if(!empty($this->ref)) {
-			$data = array_merge(
-				[
-					'ref'     => $this->ref,
-					'context' => $this->context,
-				],
-				$this->data
-			);
-		} else{
-			$data = $this->data;
+		if ( ! empty( $this->ref ) ) {
+			$additional_data['ref']     = $this->ref;
+			$additional_data['context'] = $this->context;
 		}
+
+		if ( $this->event_type instanceof Event_Type ) {
+			$additional_data['group']     = $this->event_type->group;
+			$additional_data['volume']    = $this->event_type->volume;
+			$additional_data['psr_level'] = $this->event_type->psr_level;
+		}
+
+		$log_message = 'Underpin ' . $this->type . ' event' . ': ' . $this->code . ' - ' . $this->message;
+
+
+		$data = array_merge(
+			$additional_data,
+			$this->data
+		);
 
 		if ( ! empty( $data ) ) {
 			$log_message .= "\n data:" . var_export( (object) $data, true );
