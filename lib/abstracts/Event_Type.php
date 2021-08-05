@@ -12,7 +12,13 @@ namespace Underpin_Logger\Abstracts;
 
 use ArrayIterator;
 use Exception;
+use Underpin\Abstracts\Underpin;
+use Underpin\Factories\Registry;
+use Underpin\Traits\Middleware;
+use Underpin_Logger\Abstracts\Registries\Capability_Registry;
+use Underpin_Logger\Abstracts\Registries\Writer_Registry;
 use Underpin_Logger\Factories\Log_Item;
+use Underpin_Logger\Loaders\Logger;
 use WP_Error;
 use function Underpin\underpin;
 
@@ -28,6 +34,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 abstract class Event_Type extends ArrayIterator {
 
+	use Middleware;
+
 	/**
 	 * Event type
 	 *
@@ -35,26 +43,7 @@ abstract class Event_Type extends ArrayIterator {
 	 *
 	 * @var string
 	 */
-	public $type = '';
-
-	/**
-	 * Writes this to the log.
-	 * Set this to true to cause this event to get written to the log.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @var bool
-	 */
-	protected $write_to_log = false;
-
-	/**
-	 * Force logged events to include a backtrace.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @var bool
-	 */
-	protected $include_backtrace = false;
+	protected $type = '';
 
 	/**
 	 * List of capabilities.
@@ -65,7 +54,7 @@ abstract class Event_Type extends ArrayIterator {
 	 *
 	 * @var array
 	 */
-	protected $capabilities = [];
+	protected $capabilities;
 
 	/**
 	 * The minimum volume to be able to see events of this type.
@@ -108,7 +97,7 @@ abstract class Event_Type extends ArrayIterator {
 	 *
 	 * @var string
 	 */
-	public $psr_level = '';
+	protected $psr_level = '';
 
 	/**
 	 * The class to instantiate when writing to the error log.
@@ -117,7 +106,7 @@ abstract class Event_Type extends ArrayIterator {
 	 *
 	 * @var string Namespaced instance of writer class.
 	 */
-	public $writer_class = 'Underpin_Logger\Factories\Basic_Logger';
+	protected $writers;
 
 	/**
 	 * The class to instantiate when logging a new item.
@@ -126,7 +115,7 @@ abstract class Event_Type extends ArrayIterator {
 	 *
 	 * @var string Namespaced instance of log item class.
 	 */
-	public $log_item_class = 'Underpin_Logger\Factories\Log_Item';
+	protected $log_item_class = 'Underpin_Logger\Factories\Log_Item';
 
 	/**
 	 * Determines how often this event type should be purged.
@@ -146,56 +135,43 @@ abstract class Event_Type extends ArrayIterator {
 		parent::__construct();
 
 		/**
-		 * Filters the writer that is used when logging events.
+		 * Makes it possible to modify the middleware for all logged events.
 		 *
-		 * @since 1.0.0
-		 * @param string $writer_class   The writer class to instantiate when a writer is created.
-		 * @param string $type           The current event type.
-		 * @param string $log_item_class The writer class to instantiate when a writer is created.
-		 */
-		$this->writer_class = apply_filters( 'underpin/event_type/writer_class', $this->writer_class, $this->type, $this->log_item_class );
-
-		/**
-		 * Filters the log item that is used when logging events.
+		 * @since 2.0.0
 		 *
-		 * @since 1.0.0
-		 * @param string $log_item_class The writer class to instantiate when a writer is created.
-		 * @param string $type           The current event type.
-		 * @param string $writer_class   The writer class to instantiate when a writer is created.
-		 */
-		$this->log_item_class = apply_filters( 'underpin/event_type/log_item_class', $this->log_item_class, $this->type, $this->writer_class );
-
-		/**
-		 * Filters the capabilities for event types.
+		 * @param array      $middlewares list of middlewares to add
+		 * @param Event_Type $event_type  The event type instance
 		 *
-		 * @since 1.0.0
-		 * @param array $capabilities The list of capabilities to set for this event type.
-		 * @param type  $type         The current event type
-		 * @param type  $group        The current event group
 		 */
-		$this->capabilities   = apply_filters( 'underpin/event_type/capabilities', $this->capabilities, $this->type );
-		$this->capabilities[] = 'administrator';
+		$this->middlewares = apply_filters( 'underpin\event_logs\middlewares', $this->middlewares, $this );
 
+		$this->writers = new Registry( [
+			'registry_id'       => 'underpin_logger_' . $this->type,
+			'skip_logging'      => true,
+			'validate_callback' => function ( $key, $value ) {
+				$abstraction_class = '\Underpin_Logger\Abstracts\Writer';
+				if ( $value === $abstraction_class || is_subclass_of( $value, $abstraction_class ) || $value instanceof $abstraction_class ) {
+					return true;
+				}
 
-		/**
-		 * Filters the group for event types.
-		 *
-		 * @since 1.0.0
-		 * @param array $capabilities The list of capabilities to set for this event type.
-		 * @param type  $type         The current event type
-		 * @param type  $group        The current event group
-		 */
-		$this->group = apply_filters( 'underpin/event_type/group', $this->group, $this->type );
+				if ( is_array( $value ) ) {
+					if ( isset( $value['write_callback'] ) && isset( $value['clear_callback'] ) && isset( $value['purge_callback'] ) ) {
+						return true;
+					}
+				}
 
-		/**
-		 * Filters the volume for event types.
-		 *
-		 * @since 1.0.0
-		 * @param array $capabilities The list of capabilities to set for this event type.
-		 * @param type  $type         The current event type
-		 * @param type  $group        The current event group
-		 */
-		$this->volume = apply_filters( 'underpin/event_type/volume', $this->volume, $this->type );
+				return false;
+			},
+		] );
+
+		$this->capabilities = new Registry( [
+			'registry_id'       => 'underpin_logger_capabilities_' . $this->type,
+			'skip_logging'      => true,
+			'default_items'     => [ 'administrator' ],
+			'validate_callback' => function ( $key, $value ) {
+				return is_string( $value );
+			},
+		] );
 	}
 
 	/**
@@ -209,49 +185,54 @@ abstract class Event_Type extends ArrayIterator {
 	 * Log events to the logger.
 	 *
 	 * @since 1.0.0
+	 * @since 2.0.0 - Added support for multiple logger writers
 	 */
 	public function log_events() {
-		$writer = $this->writer();
+		$this->write_events( $this );
+		reset( $this );
+	}
 
-		if ( ! is_wp_error( $writer ) ) {
-			$writer->write_events();
-			reset( $this );
+
+	/**
+	 * Constructs a writer instance from the provided key and event type.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param            $key
+	 * @param Event_Type $event_type
+	 *
+	 * @return Writer|WP_Error
+	 */
+	public function make_writer( $key, Event_Type $event_type ) {
+		$item = $this->writers->get( $key );
+
+		// If something went wrong, return the WP Error
+		if ( is_wp_error( $item ) ) {
+			return $item;
 		}
 
-		do_action( 'logger/after_log_events', $this->writer_class, $this->type );
+		// if this event was made using the array method, construct it with make class.
+		if ( is_array( $item ) ) {
+			$logger['event_type'] = $event_type;
+			return Underpin::make_class( $logger, '\Underpin_Logger\Factories\Event_Type_Instance' );
+		}
+
+		// Return the event
+		return new $item( $event_type );
 	}
 
 	/**
-	 * Fetch the log writer instance, if this class supports logging.
+	 * Write the events in this event type to each specified writer.
 	 *
-	 * @since 1.0.0
-	 *
-	 * @return Writer|WP_Error The logger instance if this can write to log. WP_Error otherwise.
+	 * @since 2.0.0
 	 */
-	public function writer() {
-		if ( true !== $this->write_to_log ) {
-			return new WP_Error(
-				'event_type_does_not_write',
-				'The specified event type does not write to the logger. To change this, set the write_to_log param to true.',
-				[ 'logger' => $this->type, 'write_to_log_value' => $this->write_to_log ]
-			);
-		} elseif ( true === underpin()->logger()->is_muted() ) {
-			return new WP_Error(
-				'events_are_muted',
-				'The specified event type was not logged because events are muted.',
-				[ 'logger' => $this->type ]
-			);
+	protected function write_events( Event_Type $event_type ) {
+		foreach ( (array) $this->writers as $key => $logger ) {
+			$writer = $this->make_writer( $key, $event_type );
+			if ( ! is_wp_error( $logger ) ) {
+				$writer->write_events();
+			}
 		}
-
-		if ( ! is_subclass_of( $this->writer_class, 'Underpin_Logger\Abstracts\Writer' ) ) {
-			return new WP_Error(
-				'writer_class_invalid',
-				'The writer class must be extend the Writer class.',
-				[ 'writer_class' => $this->writer_class ]
-			);
-		}
-
-		return new $this->writer_class( $this );
 	}
 
 
@@ -267,11 +248,22 @@ abstract class Event_Type extends ArrayIterator {
 	 */
 	public function log( $code, $message, $data = array() ) {
 
-		if ( true === $this->include_backtrace ) {
-			$data['backtrace'] = wp_debug_backtrace_summary( null, 3, false );
-		}
+		/**
+		 * Makes it possible to add additional data to logged events.
+		 *
+		 * @since 2.0.0
+		 *
+		 * @param array      $data     list of data to add
+		 * @param string     $code     event code
+		 * @param string     $message  event message
+		 * @param Event_Type $instance The current event instance
+		 *
+		 */
+		$additional_logged_data = apply_filters( 'underpin/logger/additional_logged_data', [], $code, $message, $this );
 
-		$item = new $this->log_item_class( $this->type, $code, $message, $data );
+		// Add additional data, but original data should take priority.
+		$data = array_merge( (array) $additional_logged_data, $data );
+		$item = new $this->log_item_class( $this, $code, $message, $data,  );
 
 		if ( ! $item instanceof Log_Item ) {
 			return new WP_Error(
