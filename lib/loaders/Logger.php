@@ -10,9 +10,12 @@
 namespace Underpin_Logger\Loaders;
 
 use Exception;
-use Underpin\Abstracts\Registries\Loader_Registry;
+use Underpin\Abstracts\Registries\Object_Registry;
 use Underpin_Logger\Abstracts\Event_Type;
 use Underpin_Logger\Factories\Log_Item;
+use Underpin\Factories\Observers\Trigger_Exception;
+use Underpin\Factories\Observers\Trigger_Notice;
+use Underpin\Traits\With_Subject;
 use WP_Error;
 use function Underpin\underpin;
 
@@ -27,7 +30,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @since   1.0.0
  * @package Underpin\Loaders
  */
-class Logger extends Loader_Registry {
+class Logger extends Object_Registry {
+
+	use With_Subject;
 
 	/**
 	 * @inheritDoc
@@ -119,7 +124,10 @@ class Logger extends Loader_Registry {
 			return $event_type;
 		}
 
-		return $event_type->log( $code, $message, $data );
+		$item = $event_type->log( $code, $message, $data );
+		$this->notify( 'event:logged', ['event' => $item, 'event_type' => $event_type]);
+
+		return $item;
 	}
 
 	/**
@@ -269,36 +277,11 @@ class Logger extends Loader_Registry {
 	}
 
 	/**
-	 * Purge old logged events.
-	 *
-	 * @since 1.0.0
-	 *
-	 */
-	public function cleanup() {
-		foreach ( $this as $key => $class ) {
-			$writer = $this->get( $key )->writer();
-
-			if ( ! is_wp_error( $writer ) ) {
-				$purged = $writer->cleanup();
-
-				if ( is_wp_error( $purged ) ) {
-					$this->log_wp_error( 'error', $purged );
-				}
-			}
-		}
-	}
-
-	/**
 	 * @inheritDoc
 	 */
 	protected function set_default_items() {
 		$defaults = [
-			'group'           => 'core',
-			'purge_frequency' => 7,
-			'middlewares'     => [
-				'Underpin_Logger\Factories\Basic_Logger_Middleware',
-				'Underpin_Logger\Factories\Include_Backtrace_Middleware',
-			],
+			'group' => 'core',
 		];
 
 		$this->add( 'emergency', array_merge( $defaults, [
@@ -336,7 +319,6 @@ class Logger extends Loader_Registry {
 				'description' => 'Intended to log events when something seems wrong.',
 				'name'        => 'Warning',
 				'psr_level'   => 'warning',
-				'middlewares' => [],
 			] ) );
 
 			$this->add( 'notice', array_merge( [
@@ -344,7 +326,6 @@ class Logger extends Loader_Registry {
 				'description' => 'Posts informative notices when something is neither good nor bad.',
 				'name'        => 'Notice',
 				'psr_level'   => 'notice',
-				'middlewares' => [],
 			] ) );
 
 			$this->add( 'info', array_merge( [
@@ -352,7 +333,6 @@ class Logger extends Loader_Registry {
 				'description' => 'Posts informative messages that something is most-likely going as-expected.',
 				'name'        => 'Info',
 				'psr_level'   => 'info',
-				'middlewares' => [],
 			] ) );
 
 			$this->add( 'debug', array_merge( [
@@ -360,8 +340,27 @@ class Logger extends Loader_Registry {
 				'description' => 'A place to put information that is only useful in debugging context.',
 				'name'        => 'Debug',
 				'psr_level'   => 'debug',
-				'middlewares' => [],
 			] ) );
+		}
+
+		// attach some defaults to PHP error logger
+		foreach ( $this as $key => $logger ) {
+			$logger = $this->get( $key );
+
+			// Force shutdown on critical errors
+			if ( in_array( $logger->psr_level, [ 'critical', 'alert', 'emergency' ] ) ) {
+				$logger->attach( 'log:item_logged', new Trigger_Exception('critical_error') );
+			}
+
+			// Trigger notices on logged items.
+			if ( in_array( $logger->psr_level, [ 'warning' ] ) ) {
+				$logger->attach( 'log:item_logged', new Trigger_Notice( 'notice', E_USER_NOTICE ) );
+			}
+
+			// Trigger notices on logged items.
+			if ( in_array( $logger->psr_level, [ 'error' ] ) ) {
+				$logger->attach( 'log:item_logged', new Trigger_Notice( 'warning', E_USER_WARNING ) );
+			}
 		}
 	}
 
