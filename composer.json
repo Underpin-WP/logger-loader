@@ -10,9 +10,7 @@
     }
   ],
   "require": {
-    "underpin/underpin": "^2.0",
-    "underpin/cron-job-loader": "^1.0",
-    "underpin/decision-list-loader": "^1.0"
+    "underpin/underpin": "^2.0"
   },
   "autoload": {
     "files": [
